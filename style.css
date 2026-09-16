@@ -1,0 +1,135 @@
+:root {
+  --green: #1a7f37;
+  --gray: #666;
+  --red: #c0392b;
+  --bg: #fafafa;
+  --card: #ffffff;
+  --border: #e5e5e5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: #222;
+  padding-bottom: 40px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 8px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn.primary { background: var(--green); color: white; }
+.btn.secondary { background: #eee; color: #333; }
+
+.add-form {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 8px;
+}
+
+.add-form input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.add-form select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 8px;
+}
+
+.status-text {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+main {
+  padding: 0 16px;
+}
+
+.category-block {
+  margin-bottom: 16px;
+}
+
+.category-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin: 12px 0 6px;
+  color: #444;
+}
+
+.account-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.account-name { font-size: 14px; }
+
+.account-meta {
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.status-public { background: #e6f4ea; color: var(--green); }
+.status-private { background: #eee; color: #555; }
+.status-unknown { background: #fdecea; color: var(--red); }
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 16px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.footer-note {
+  padding: 16px;
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+}

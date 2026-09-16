@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>인스타 공개전환 모니터</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#1a7f37" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>IG 공개전환 모니터</h1>
+    <button id="notifyBtn" class="btn secondary">🔔 알림 켜기</button>
+  </header>
+
+  <section class="add-form">
+    <input id="usernameInput" type="text" placeholder="계정 아이디 (예: abc_123)" />
+    <select id="categorySelect"></select>
+    <button id="addBtn" class="btn primary">추가</button>
+  </section>
+
+  <section class="toolbar">
+    <button id="refreshBtn" class="btn secondary">지금 새로고침</button>
+    <span id="statusText" class="status-text"></span>
+  </section>
+
+  <main id="accountList"></main>
+
+  <p class="footer-note">
+    로그인 정보 없이 공개 프로필 페이지의 "공개/비공개" 상태만 확인합니다. 게시물 내용은 가져오지 않습니다.
+  </p>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -30,7 +30,7 @@ app.get("/api/accounts", (req, res) => {
 });
 
 app.post("/api/accounts", (req, res) => {
-  const { username, category } = req.body;
+  const { username, category, name } = req.body;
   if (!username || typeof username !== "string") {
     return res.status(400).json({ error: "username이 필요합니다." });
   }
@@ -45,6 +45,7 @@ app.post("/api/accounts", (req, res) => {
     isPrivate: null,
     lastChecked: null,
     category: (category && category.trim()) || DEFAULT_CATEGORY,
+    name: (typeof name === "string" && name.trim()) || null,
     failCount: 0,
     nextCheckAfter: null,
     pushEnabled: true,
@@ -66,6 +67,9 @@ app.patch("/api/accounts/:username", (req, res) => {
   }
   if (typeof req.body.category === "string" && req.body.category.trim()) {
     info.category = req.body.category.trim();
+  }
+  if (typeof req.body.name === "string") {
+    info.name = req.body.name.trim() || null;
   }
 
   accounts[req.params.username] = info;
@@ -94,6 +98,20 @@ app.post("/api/refresh", (req, res) => {
   // 수동 새로고침: 백오프 무시하고 즉시 전체 체크 시작 (완료를 기다리지 않고 바로 응답)
   checker.refreshAll({ respectBackoff: false }).catch((e) => console.error(e));
   res.json({ status: "started" });
+});
+
+app.post("/api/accounts/:username/refresh", async (req, res) => {
+  const accounts = store.getAccounts();
+  if (!accounts[req.params.username]) {
+    return res.status(404).json({ error: "계정을 찾을 수 없습니다." });
+  }
+  try {
+    await checker.checkOne(req.params.username, { respectBackoff: false });
+    res.json(store.getAccounts()[req.params.username]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "새로고침 중 오류가 발생했습니다." });
+  }
 });
 
 // ---------- 웹푸시 API ----------

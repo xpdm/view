@@ -19,14 +19,9 @@ body {
 
 header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 16px 16px 8px;
-}
-
-h1 {
-  font-size: 18px;
-  margin: 0;
 }
 
 .btn {
@@ -104,6 +99,22 @@ main {
 
 .account-name { font-size: 14px; }
 
+.account-id {
+  color: var(--gray);
+  font-weight: normal;
+}
+
+.edit-name-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  margin-left: 4px;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.5;
+}
+.edit-name-btn:active { opacity: 1; }
+
 .account-meta {
   font-size: 11px;
   color: var(--gray);
@@ -132,6 +143,18 @@ main {
 }
 .push-toggle-btn.off { opacity: 0.35; }
 
+.refresh-one-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  margin-left: 8px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+}
+.refresh-one-btn:disabled { opacity: 0.3; cursor: default; }
+
 .delete-btn {
   background: none;
   border: none;
@@ -139,11 +162,4 @@ main {
   font-size: 16px;
   margin-left: 8px;
   cursor: pointer;
-}
-
-.footer-note {
-  padding: 16px;
-  font-size: 11px;
-  color: #999;
-  text-align: center;
 }

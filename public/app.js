@@ -48,6 +48,12 @@ categorySelect.addEventListener("change", () => {
   }
 });
 
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function statusLabel(info) {
   if (info.isPrivate === true) return { text: "비공개", cls: "status-private" };
   if (info.isPrivate === false) return { text: "공개", cls: "status-public" };
@@ -79,15 +85,23 @@ function renderAccounts() {
       byCategory[cat].forEach(([username, info]) => {
         const { text, cls } = statusLabel(info);
         const pushOn = info.pushEnabled !== false; // 필드 없으면 기본 on
+        const displayName = info.name && info.name.trim();
+        const nameHtml = displayName
+          ? `${escapeHtml(displayName)} <span class="account-id">(${escapeHtml(username)})</span>`
+          : escapeHtml(username);
         const card = document.createElement("div");
         card.className = "account-card";
         card.innerHTML = `
           <div class="account-info" data-username="${username}">
-            <div class="account-name">@${username}</div>
+            <div class="account-name">
+              <span class="account-name-text">${nameHtml}</span>
+              <button class="edit-name-btn" data-username="${username}" title="이름 설정">✏️</button>
+            </div>
             <div class="account-meta">${info.lastChecked ? new Date(info.lastChecked).toLocaleString("ko-KR") : "-"}</div>
           </div>
           <div style="display:flex; align-items:center;">
             <span class="status-badge ${cls}">${text}</span>
+            <button class="refresh-one-btn" data-username="${username}" title="이 계정만 새로고침">🔄</button>
             <button class="push-toggle-btn ${pushOn ? "on" : "off"}" data-username="${username}" title="${pushOn ? "알림 켜짐 (클릭하면 끄기)" : "알림 꺼짐 (클릭하면 켜기)"}">${pushOn ? "🔔" : "🔕"}</button>
             <button class="delete-btn" data-username="${username}">✕</button>
           </div>
@@ -103,6 +117,41 @@ function renderAccounts() {
     el.addEventListener("click", () => {
       const username = el.dataset.username;
       window.open(`https://imginn.com/${encodeURIComponent(username)}/`, "_blank", "noopener");
+    });
+  });
+
+  // 이름 설정/변경
+  accountList.querySelectorAll(".edit-name-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const username = btn.dataset.username;
+      const info = accountsCache[username];
+      const current = (info && info.name) || "";
+      const input = prompt(`표시할 이름을 입력하세요 (비워두면 아이디만 표시):\n(@${username})`, current);
+      if (input === null) return; // 취소
+      await fetch(`/api/accounts/${encodeURIComponent(username)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: input.trim() }),
+      });
+      loadAccounts();
+    });
+  });
+
+  // 계정별 개별 새로고침
+  accountList.querySelectorAll(".refresh-one-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const username = btn.dataset.username;
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = "⏳";
+      try {
+        await fetch(`/api/accounts/${encodeURIComponent(username)}/refresh`, { method: "POST" });
+      } catch (err) {
+        console.error(err);
+      }
+      loadAccounts();
     });
   });
 
@@ -152,6 +201,12 @@ addBtn.addEventListener("click", async () => {
 });
 
 refreshBtn.addEventListener("click", async () => {
+  const count = Object.keys(accountsCache).length;
+  const ok = confirm(
+    `등록된 계정 ${count}개 전체를 지금 새로고침합니다.\n인스타그램에 계정마다 순차적으로 요청을 보내니 계정 수가 많으면 시간이 걸릴 수 있어요.\n계속할까요?`
+  );
+  if (!ok) return;
+
   statusText.textContent = "새로고침 요청됨...";
   await fetch("/api/refresh", { method: "POST" });
   setTimeout(loadAccounts, 3000);

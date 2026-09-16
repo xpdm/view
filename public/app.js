@@ -10,6 +10,20 @@ const accountList = document.getElementById("accountList");
 
 let accountsCache = {};
 
+const COLLAPSE_KEY = "igmonitor_collapsed_categories";
+
+function getCollapsedSet() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveCollapsedSet(set) {
+  localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...set]));
+}
+
 async function loadAccounts() {
   const res = await fetch("/api/accounts");
   accountsCache = await res.json();
@@ -71,15 +85,25 @@ function renderAccounts() {
     byCategory[cat].push([username, info]);
   });
 
+  const collapsed = getCollapsedSet();
+
   Object.keys(byCategory)
     .sort()
     .forEach((cat) => {
       const block = document.createElement("div");
       block.className = "category-block";
+      if (collapsed.has(cat)) block.classList.add("collapsed");
 
       const title = document.createElement("div");
       title.className = "category-title";
-      title.textContent = cat;
+      title.innerHTML = `<span class="category-toggle-icon">▾</span> ${escapeHtml(cat)} <span class="category-count">${byCategory[cat].length}</span>`;
+      title.addEventListener("click", () => {
+        const isCollapsed = block.classList.toggle("collapsed");
+        const set = getCollapsedSet();
+        if (isCollapsed) set.add(cat);
+        else set.delete(cat);
+        saveCollapsedSet(set);
+      });
       block.appendChild(title);
 
       byCategory[cat].forEach(([username, info]) => {

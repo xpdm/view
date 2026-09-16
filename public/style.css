@@ -81,6 +81,31 @@ main {
   font-size: 14px;
   margin: 12px 0 6px;
   color: #444;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.category-title:active { opacity: 0.6; }
+
+.category-toggle-icon {
+  display: inline-block;
+  font-size: 11px;
+  transition: transform 0.15s ease;
+}
+.category-block.collapsed .category-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.category-count {
+  font-weight: normal;
+  color: var(--gray);
+  font-size: 12px;
+}
+
+.category-block.collapsed .account-card {
+  display: none;
 }
 
 .account-card {

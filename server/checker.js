@@ -11,39 +11,73 @@ const MAX_BACKOFF_MS = 6 * 60 * 60 * 1000; // 최대 6시간
  * 게시물/이미지 등 내용은 전혀 가져오지 않음.
  * 반환값: true(비공개) / false(공개) / "not_found" / null(조회 실패)
  */
-const IG_APP_ID = "936619743392459"; // 인스타그램 웹 클라이언트가 로그아웃 상태에서도 쓰는 공개 app id
+const COMMON_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+  "Accept-Language": "ko-KR,ko;q=0.9",
+};
+
+// 1차: 인스타그램 웹 클라이언트가 실제로 쓰는 비공식 JSON API.
+// HTML 정규식 파싱보다 구조 변경/로그인월(wall)에 덜 취약함.
+async function fetchIsPrivateViaApi(username) {
+  const url = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`;
+  const res = await fetch(url, {
+    headers: {
+      ...COMMON_HEADERS,
+      "x-ig-app-id": "936619743392459", // IG 웹 프론트엔드가 쓰는 공개 app id (계정/로그인과 무관)
+    },
+  });
+
+  if (res.status === 404) return "not_found";
+  if (res.status === 429) {
+    console.warn(`[checker] ${username}: API 429 (rate limited)`);
+    return null;
+  }
+  if (!res.ok) {
+    console.warn(`[checker] ${username}: API HTTP ${res.status}`);
+    return null;
+  }
+
+  const data = await res.json().catch(() => null);
+  const isPrivate = data?.data?.user?.is_private;
+  if (typeof isPrivate === "boolean") return isPrivate;
+
+  console.warn(
+    `[checker] ${username}: API 응답에 is_private 없음 (로그인월/차단 가능성) - ${JSON.stringify(data).slice(0, 200)}`
+  );
+  return null;
+}
+
+// 2차 폴백: 기존 HTML 스크래핑 방식
+async function fetchIsPrivateViaHtml(username) {
+  const url = `https://www.instagram.com/${encodeURIComponent(username)}/`;
+  const res = await fetch(url, { headers: COMMON_HEADERS });
+
+  if (res.status === 404) return "not_found";
+  if (!res.ok) {
+    console.warn(`[checker] ${username} HTML HTTP ${res.status}`);
+    return null;
+  }
+
+  const html = await res.text();
+  const match = html.match(/"is_private"\s*:\s*(true|false)/);
+  if (!match) {
+    console.warn(`[checker] ${username}: HTML에서 is_private 필드를 찾지 못함 (페이지 구조 변경/로그인월 가능성)`);
+    return null;
+  }
+  return match[1] === "true";
+}
 
 async function fetchIsPrivate(username) {
-  const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`;
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "Accept-Language": "ko-KR,ko;q=0.9",
-        "x-ig-app-id": IG_APP_ID,
-        "x-requested-with": "XMLHttpRequest",
-        Referer: `https://www.instagram.com/${encodeURIComponent(username)}/`,
-      },
-    });
+    const apiResult = await fetchIsPrivateViaApi(username);
+    if (apiResult !== null) return apiResult;
+  } catch (e) {
+    console.warn(`[checker] ${username}: API 요청 오류 - ${e.message}`);
+  }
 
-    if (res.status === 404) return "not_found";
-    if (!res.ok) {
-      console.warn(`[checker] ${username} HTTP ${res.status}`);
-      return null;
-    }
-
-    const data = await res.json();
-    const user = data && data.data && data.data.user;
-    if (!user) {
-      console.warn(`[checker] ${username}: user 데이터 없음 (계정 없음 또는 응답 구조 변경)`);
-      return "not_found";
-    }
-    if (typeof user.is_private !== "boolean") {
-      console.warn(`[checker] ${username}: is_private 필드를 찾지 못함 (응답 구조 변경 가능성)`);
-      return null;
-    }
-    return user.is_private;
+  try {
+    return await fetchIsPrivateViaHtml(username);
   } catch (e) {
     console.error(`[checker] ${username} 조회 오류:`, e.message);
     return null;

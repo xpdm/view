@@ -62,7 +62,12 @@ async function fetchIsPrivateViaHtml(username) {
   const html = await res.text();
   const match = html.match(/"is_private"\s*:\s*(true|false)/);
   if (!match) {
-    console.warn(`[checker] ${username}: HTML에서 is_private 필드를 찾지 못함 (페이지 구조 변경/로그인월 가능성)`);
+    const looksLikeLoginWall = /Log in|loginForm|"loggedIn":false/i.test(html);
+    console.warn(
+      `[checker] ${username}: HTML에서 is_private 필드를 찾지 못함 ` +
+        `(로그인월로 보임: ${looksLikeLoginWall}, 길이: ${html.length}자) ` +
+        `스니펫: ${html.replace(/\s+/g, " ").slice(0, 300)}`
+    );
     return null;
   }
   return match[1] === "true";
